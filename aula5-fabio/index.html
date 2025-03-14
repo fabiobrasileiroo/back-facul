@@ -1,65 +1,124 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Tabela de Solicitantes</title>
+    <title>Unidades de Conservação</title>
     <style>
         table { border-collapse: collapse; width: 100%; }
         th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
         th { background-color: #f2f2f2; }
         tr:nth-child(even) { background-color: #f9f9f9; }
         .container { margin: 20px; }
+        .controls { margin: 20px 0; }
+        select, button { margin-right: 10px; padding: 5px; }
     </style>
 </head>
 <body>
     <div class="container">
         <input type="file" id="csvFile" accept=".csv">
+        <div class="controls">
+            <div id="filters">
+                <!-- Filtros serão inseridos aqui -->
+            </div>
+        </div>
         <div id="tableContainer"></div>
     </div>
 
     <script>
+        let ucData = [];
+
         document.getElementById('csvFile').addEventListener('change', function(e) {
             const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const csvData = e.target.result;
-                    const table = csvToTable(csvData);
-                    document.getElementById('tableContainer').innerHTML = '';
-                    document.getElementById('tableContainer').appendChild(table);
-                };
-                reader.readAsText(file, 'ISO-8859-1'); // Ajuste o encoding se necessário
-            }
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                const csvText = e.target.result;
+                processCSV(csvText);
+            };
+            
+            reader.readAsText(file);
         });
 
-        function csvToTable(csv) {
-            const rows = csv.split('\n').filter(row => row.trim() !== '');
-            const table = document.createElement('table');
-            const thead = document.createElement('thead');
-            const tbody = document.createElement('tbody');
+        function processCSV(csvText) {
+            const rows = csvText.split('\n').map(row => row.trim());
+            const headers = rows[0].split(';').map(header => header.trim());
+            
+            ucData = [];
+            for (let i = 1; i < rows.length; i++) {
+                const cells = rows[i].split(';').map(cell => cell.trim());
+                const uc = {};
+                headers.forEach((header, index) => {
+                    uc[header] = cells[index] || 'N/A';
+                });
+                ucData.push(uc);
+            }
+            
+            createFilters();
+            renderTable(ucData);
+        }
 
+        function createFilters() {
+            const estados = [...new Set(ucData.map(item => item.estado))].sort();
+            const categorias = [...new Set(ucData.map(item => item.categoria))].sort();
+            
+            const filterHTML = `
+                <select id="estadoFilter">
+                    <option value="">Todos os Estados</option>
+                    ${estados.map(estado => `<option value="${estado}">${estado}</option>`).join('')}
+                </select>
+                
+                <select id="categoriaFilter">
+                    <option value="">Todas as Categorias</option>
+                    ${categorias.map(cat => `<option value="${cat}">${cat}</option>`).join('')}
+                </select>
+                
+                <button onclick="filterData()">Filtrar</button>
+            `;
+            
+            document.getElementById('filters').innerHTML = filterHTML;
+        }
+
+        function filterData() {
+            const estado = document.getElementById('estadoFilter').value;
+            const categoria = document.getElementById('categoriaFilter').value;
+            
+            const filtered = ucData.filter(item => {
+                return (!estado || item.estado === estado) && 
+                       (!categoria || item.categoria === categoria);
+            });
+            
+            renderTable(filtered);
+        }
+
+        function renderTable(data) {
+            const table = document.createElement('table');
+            const headers = Object.keys(data[0] || {});
+            
             // Cabeçalho
+            const thead = document.createElement('thead');
             const headerRow = document.createElement('tr');
-            rows[0].split(';').forEach(header => {
+            headers.forEach(header => {
                 const th = document.createElement('th');
-                th.textContent = header.trim();
+                th.textContent = header;
                 headerRow.appendChild(th);
             });
             thead.appendChild(headerRow);
             table.appendChild(thead);
-
+            
             // Dados
-            for (let i = 1; i < rows.length; i++) {
-                const cells = rows[i].split(';').map(cell => cell.trim());
+            const tbody = document.createElement('tbody');
+            data.forEach(uc => {
                 const tr = document.createElement('tr');
-                cells.forEach(cell => {
+                headers.forEach(header => {
                     const td = document.createElement('td');
-                    td.textContent = cell || 'N/A'; // Mostra 'N/A' para campos vazios
+                    td.textContent = uc[header];
                     tr.appendChild(td);
                 });
                 tbody.appendChild(tr);
-            }
+            });
             table.appendChild(tbody);
-            return table;
+            
+            document.getElementById('tableContainer').innerHTML = '';
+            document.getElementById('tableContainer').appendChild(table);
         }
     </script>
 </body>
