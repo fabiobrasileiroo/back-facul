@@ -1,4 +1,5 @@
 import * as readline from 'node:readline';
+import { tipoTriangulo } from './vertriangulo.js';
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -12,17 +13,14 @@ rl.question('Digite o lado 1: ', (lado1) => {
       lado2 = parseFloat(lado2);
       lado3 = parseFloat(lado3);
 
-      if (lado1 === lado2 && lado2 === lado3) {
-        console.log('O triângulo é Equilátero.');
-      } else if (lado1 === lado2 || lado1 === lado3 || lado2 === lado3) {
-        console.log('O triângulo é Isósceles.');
-      } else {
-        console.log('O triângulo é Escaleno.');
-      }
-
+      
+      tipoTriangulo(lado1,lado2,lado3)
       rl.close();
     });
   });
 });
 
-// calculoPerimentro(lado1, lado2,lado3)
+export function calculoPerimentro(lado1, lado2, lado3) {
+  let perimentro = lado1 + lado2 + lado3
+  console.log("perimentro",perimentro)
+}
