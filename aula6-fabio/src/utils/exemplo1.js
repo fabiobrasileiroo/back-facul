@@ -1,5 +1,5 @@
 import * as readline from 'node:readline';
-import { tipoTriangulo } from './vertriangulo.js';
+import { tipoTriangulo } from '../vertriangulo.js';
 
 const rl = readline.createInterface({
   input: process.stdin,
